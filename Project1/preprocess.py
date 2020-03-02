@@ -105,13 +105,5 @@ def preprocess(trainSetDf, validSetDf):
     featuresValid = np.insert(featuresValid, [-1], authorDf.loc[trainCount:, :].values, axis=1)
     labelsValid = np.reshape(validSetDf['label'].values, (-1, 1))
 
-    # print(idsTrain.shape)
-    # print(featuresTrain.shape)
-    # print(labelsTrain.shape)
-    # print(idsValid.shape)
-    # print(featuresValid.shape)
-    # print(labelsValid.shape)
-    # print(sum(sum(featuresTrain)) / featuresTrain.shape[0])
-    # print(sum(sum(featuresValid)) / featuresValid.shape[0])
     return idsTrain, featuresTrain, labelsTrain, idsValid, featuresValid, labelsValid
 

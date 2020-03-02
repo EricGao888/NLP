@@ -128,8 +128,41 @@ class Evaluation:
     def computeMacroF1(self, YPredicted, YGold):
         if not ((YPredicted.shape[0] == YGold.shape[0]) and (YPredicted.shape[1] == YGold.shape[1])):
             raise ValueError('YPredicted and YGold not in same dimension!')
+        m = YPredicted.shape[0]
+        labels = list(set(YPredicted.flatten()).union(YGold.flatten()))
+        labels.sort()
+        k = len(labels)
+        confusionMatrix = np.zeros((k, k))
+        labelEncodingDict = dict.fromkeys(labels, 0)
+        value = 0
+        for label in labels:
+            labelEncodingDict[label] = value
+            value += 1
 
+        f1Dict = {}
+        encodedLabelsPredicted = list(pd.DataFrame(YPredicted, columns=['label'])['label']
+                                      .apply(lambda x: labelEncodingDict[x]))
+        encodedLabelsGold = list(pd.DataFrame(YGold, columns=['label'])['label']
+                                 .apply(lambda x: labelEncodingDict[x]))
+        for i in range(k):
+            f1Dict[i] = -1
 
+        for i in range(m):
+            confusionMatrix[encodedLabelsGold[i]][encodedLabelsPredicted[i]] += 1
+
+        for i in range(k):
+            if np.sum(confusionMatrix[i]) != 0:
+                f1Dict[i] = 2.0 * confusionMatrix[i][i] / (np.sum(confusionMatrix[i]) + np.sum(confusionMatrix[:, i]))
+            elif np.sum(confusionMatrix[:, i]) != 0:
+                f1Dict[i] = 0
+            else:
+                m -= 1
+
+        count = 0
+        for label in f1Dict:
+            if f1Dict[label] != -1:
+                count += f1Dict[label]
+        return float(count) / m
 
     def computeAccuracy(self, YPredicted, YGold):
         if not ((YPredicted.shape[0] == YGold.shape[0]) and (YPredicted.shape[1] == YGold.shape[1])):
@@ -143,3 +176,5 @@ class crossValidation:
 
     def run(self):
         pass
+
+
