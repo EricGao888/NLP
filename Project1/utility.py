@@ -19,9 +19,11 @@ def readFile(inputFilePath):
     rawDf = pd.read_csv(inputFilePath, header=[0])
     return rawDf
 
+
 def saveFile(outputFilePath, originalDf, id2LabelDict):
     # Use zip ---> list of tuples ---> dataframe to pack data for output
     pass
+
 
 def sample(rawDf, random_state):
     rawDfCopy = rawDf.copy()
@@ -29,3 +31,8 @@ def sample(rawDf, random_state):
     validSetDf = rawDfCopy.drop(trainSetDf.index).reset_index(drop=True)
     return trainSetDf, validSetDf
 
+
+def computeTime(start, end):
+    minutes = int((end - start) / 60)
+    seconds = (end - start) % 60
+    print("Total time cost: %d minutes %d seconds" % (minutes, seconds))
