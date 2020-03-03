@@ -17,6 +17,8 @@ from nltk.stem import PorterStemmer
 
 from main import *
 from utility import *
+from model import *
+
 
 def text2BowTest():
     str = "This is a ** %% strange *** st((ring to test text2Bow function!"
