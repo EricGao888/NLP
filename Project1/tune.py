@@ -32,6 +32,8 @@ class CrossValidation:
         self.rawDf = rawDf
         self.paramsDict = paramsDict
 
+
+
     def run(self):
         modelType = self.modelType
         foldsNum = self.foldsNum
@@ -46,6 +48,7 @@ class CrossValidation:
         f1sTrain = []
         f1sValid = []
         columns = []
+        index = ['Train Accuracy', 'Validation Accuracy', 'Train F1', 'Validation F1']
 
         for i in range(foldsNum):
             print("Runing %d fold cross validation on %dth fold..." % (foldsNum, i+1))
@@ -53,7 +56,7 @@ class CrossValidation:
 
             rawDfCopy = rawDf.copy()
             if i == foldsNum - 1:
-                validSetDf = rawDf.loc[unitSize*i:-1, :]
+                validSetDf = rawDf.loc[unitSize*i:, :]
             else:
                 validSetDf = rawDf.loc[unitSize*i:unitSize*(i+1), :]
 
@@ -64,13 +67,21 @@ class CrossValidation:
 
             if modelType == 'lr':
                 lr = LogisticRegression()
-                lr.fit(featuresTrain, labelsTrain, learningRate=0.01, epoch=23500, lam=0.01)
+
+                learningRate = paramsDict['learningRate'] if 'learningRate' in paramsDict else 0.01
+                epoch = paramsDict['epoch'] if 'epoch' in paramsDict else 23500
+                lam = paramsDict['lambda'] if 'lambda' in paramsDict else 0.01
+
+                lr.fit(featuresTrain, labelsTrain, learningRate=learningRate, epoch=epoch, lam=lam)
                 labelsPredictedTrain = lr.predict(featuresTrain)
                 labelsPredictedValid = lr.predict(featuresValid)
+
+                eval = Evaluation()
                 accuracyTrain = eval.computeAccuracy(labelsPredictedTrain, labelsTrain)
                 accuracyValid = eval.computeAccuracy(labelsPredictedValid, labelsValid)
                 macroF1Train = f1_score(labelsTrain, labelsPredictedTrain, average='macro')  # Check with sklearn
                 macroF1Valid = f1_score(labelsValid, labelsPredictedValid, average='macro')  # Check with sklearn
+
                 accuraciesTrain.append(accuracyTrain)
                 accuraciesValid.append(accuracyValid)
                 f1sTrain.append(macroF1Train)
@@ -78,17 +89,36 @@ class CrossValidation:
 
             if modelType == 'nn':
                 nn = NeuralNetwork()
-                nn.fit(featuresTrain, labelsTrain, learningRate=0.005, epoch=10000, batchSize=1, lam=0, hiddenLayerSize=2)
+
+                learningRate = paramsDict['learningRate'] if 'learningRate' in paramsDict else 0.01
+                epoch = paramsDict['epoch'] if 'epoch' in paramsDict else 23500
+                lam = paramsDict['lambda'] if 'lambda' in paramsDict else 0.01
+                batchSize = paramsDict['batchSize'] if 'batchSize' in paramsDict else 1
+                hiddenLayerSize  = paramsDict['hiddenLayerSize'] if 'hiddenLayerSize' in paramsDict else 2
+
+                nn.fit(featuresTrain, labelsTrain, learningRate=learningRate, epoch=epoch, batchSize=batchSize, lam=lam, hiddenLayerSize=hiddenLayerSize)
                 labelsPredictedTrain = nn.predict(featuresTrain)
                 labelsPredictedValid = nn.predict(featuresValid)
+
+                eval = Evaluation()
                 accuracyTrain = eval.computeAccuracy(labelsPredictedTrain, labelsTrain)
                 accuracyValid = eval.computeAccuracy(labelsPredictedValid, labelsValid)
                 macroF1Train = f1_score(labelsTrain, labelsPredictedTrain, average='macro')  # Check with sklearn
                 macroF1Valid = f1_score(labelsValid, labelsPredictedValid, average='macro')  # Check with sklearn
+
                 accuraciesTrain.append(accuracyTrain)
                 accuraciesValid.append(accuracyValid)
                 f1sTrain.append(macroF1Train)
                 f1sValid.append(macroF1Valid)
+
+        accuraciesTrain.append(sum(accuraciesTrain) / foldsNum)
+        accuraciesValid.append(sum(accuraciesValid) / foldsNum)
+        f1sTrain.append(sum(f1sTrain) / foldsNum)
+        f1sValid.append(sum(f1sValid) / foldsNum)
+        columns.append('Average')
+        result = pd.DataFrame(np.array([accuraciesTrain, accuraciesValid, f1sTrain, f1sValid]), columns=columns, index=index)
+        print(result)
+
 
 
 
@@ -160,15 +190,23 @@ def tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid):
 
 if __name__ == '__main__':
     start = time.time()
+
     rawDf = readFile(sys.argv[1])
-    trainSetDf, validSetDf = sample(rawDf, random_state=1)
-    idsTrain, featuresTrain, labelsTrain, idsValid, featuresValid, labelsValid = preprocess(trainSetDf, validSetDf)
+
+    # Split data
+    # trainSetDf, validSetDf = sample(rawDf, random_state=1)
+
+    # Preprocess data
+    # idsTrain, featuresTrain, labelsTrain, idsValid, featuresValid, labelsValid = preprocess(trainSetDf, validSetDf)
 
     # Baseline
-    runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid)
+    # runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid)
 
     # Logistic regression
     # tuneLogisticRegression(featuresTrain, featuresValid, labelsTrain, labelsValid)
+    paramsDict = {'learningRate': 0.01, 'epoch': 23500, 'lambda': 0.01}
+    cv = CrossValidation(rawDf, foldsNum=10, modelType='lr', paramsDict=paramsDict)
+    cv.run()
 
     # Neural Network
     # tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid)

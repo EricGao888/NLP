@@ -84,7 +84,7 @@ class LogisticRegression:
             if i % 500 == 0:
                 print("Cost = %f in %dth Epoch..." % (cost, i))
 
-        print(W)
+        # print(W)
         self.W = W
 
     def predict(self, X):
