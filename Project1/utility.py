@@ -15,14 +15,24 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
 
-def readFile(inputFilePath):
+def readDataFrame(inputFilePath):
     rawDf = pd.read_csv(inputFilePath, header=[0])
     return rawDf
 
 
-def saveFile(outputFilePath, originalDf, id2LabelDict):
-    # Use zip ---> list of tuples ---> dataframe to pack data for output
-    pass
+def saveDataFrame(resultDf, outputFilePath):
+    if outputFilePath == '':
+        resultDf.to_csv('output.csv', index=False)
+    else:
+        resultDf.to_csv(outputFilePath, index=False)
+
+
+def saveResult(testSetDf, idsTest, labelsPredictedTest, outputFilePath=''):
+    ids = list(idsTest.flatten())
+    labels = list(labelsPredictedTest.flatten())
+    id2LabelDict = dict(zip(ids, labels))
+    testSetDf['label'] = testSetDf.apply(lambda x: id2LabelDict[x.tweet_id], axis=1)
+    saveDataFrame(testSetDf, outputFilePath)
 
 
 def sample(rawDf, random_state=1):
@@ -38,6 +48,13 @@ def computeTime(start, end):
     minutes = int((end - start) / 60)
     seconds = (end - start) % 60
     print("Total time cost: %d minutes %d seconds" % (minutes, seconds))
+
+def computeDistribution(rawDf):
+    labels = list(rawDf['label'])
+    labelDict = dict.fromkeys(set(labels), 0)
+    for label in labels:
+        labelDict[label] += 1
+    print(labelDict)
 
 
 class Evaluation:

@@ -1,5 +1,5 @@
 # m: #examples, n: #features (including bias term), k: #classes
-# http://deeplearning.stanford.edu/tutorial/supervised/SoftmaxRegression/
+# For math, refer to http://deeplearning.stanford.edu/tutorial/supervised/SoftmaxRegression/
 import os
 import sys
 import re
@@ -40,8 +40,8 @@ class LogisticRegression:
 
     def softmax(self, Z):
         # Z = W(k * n)X(n * m): k * m
-        Z -= np.max(Z)  # Avoid sum being too large
-        A = np.exp(Z).T / np.sum(np.exp(Z).T, axis=0)  # A: m * k
+        Z -= np.max(Z)  # Avoid sum being too large, won't affect result due to the properties of softmax
+        A = np.exp(Z).T / np.reshape(np.sum(np.exp(Z).T, axis=1), (-1, 1))  # A: m * k
         return A
 
     def encode(self, x):
@@ -137,8 +137,8 @@ class NeuralNetwork:
 
     def softmax(self, Z):
         # Z = W(k * n)X(n * m): k * m
-        Z -= np.max(Z)  # Avoid sum being too large
-        A = np.exp(Z).T / np.sum(np.exp(Z).T, axis=0)  # A: m * k
+        Z -= np.max(Z)  # Avoid sum being too large, won't affect result due to the properties of softmax
+        A = np.exp(Z).T / np.reshape(np.sum(np.exp(Z).T, axis=1), (-1, 1))  # A: m * k
         return A
 
     def encode(self, x):
@@ -213,7 +213,7 @@ class NeuralNetwork:
             Wo -= (1 / m) * learningRate * dCostDWo.T  # dCostDWh.T: k * hiddenLayerSize
             Bo -= (1 / m) * learningRate * np.reshape(np.sum(dCostDBo.T, axis=1), (-1, 1))  # dCostDBo.T = k * m
 
-            if i % 100 == 0:
+            if i % 500 == 0:
                 cost = (1 / m) * np.sum(-YOneHot * np.log(Ao))
                 print("Cost = %f in %dth Epoch..." % (cost, i))
 
@@ -221,6 +221,8 @@ class NeuralNetwork:
         self.Bh = Bh
         self.Wo = Wo
         self.Bo = Bo
+        # print(Wh)
+        # print(Wo)
 
     def predict(self, X):
         Wh = self.Wh

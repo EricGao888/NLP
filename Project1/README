@@ -1,2 +1,5 @@
-Dependencies (libraries)
+Command:
+Use `./run.sh` to run the main.py
+
+Dependencies (libraries):
 nltk stopwords

@@ -20,6 +20,9 @@ from test import *
 from preprocess import *
 from model import *
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score
 
 np.random.seed(seed=0)
@@ -31,8 +34,6 @@ class CrossValidation:
         self.foldsNum = foldsNum
         self.rawDf = rawDf
         self.paramsDict = paramsDict
-
-
 
     def run(self):
         modelType = self.modelType
@@ -120,9 +121,6 @@ class CrossValidation:
         print(result)
 
 
-
-
-
 def runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid):
     # Fit model and predict
     bl = Baseline()
@@ -143,7 +141,7 @@ def runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid):
 def tuneLogisticRegression(featuresTrain, featuresValid, labelsTrain, labelsValid):
     # Fit model and predict
     lr = LogisticRegression()
-    lr.fit(featuresTrain, labelsTrain, learningRate=0.01, epoch=23500, lam=0.01)
+    lr.fit(featuresTrain, labelsTrain, learningRate=0.2, epoch=50000, lam=0)
     labelsPredictedTrain = lr.predict(featuresTrain)
     labelsPredictedValid = lr.predict(featuresValid)
 
@@ -162,11 +160,14 @@ def tuneLogisticRegression(featuresTrain, featuresValid, labelsTrain, labelsVali
     print("Macro-F1 Score for Logistic Regression on Training Set: %.2f / 100" % (macroF1Train * 100))
     print("Macro-F1 Score for Logistic Regression on Validation Set: %.2f / 100" % (macroF1Valid * 100))
 
+    # print(labelsPredictedValid)
+    # print(labelsValid)
+
 
 def tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid):
     # Fit model and predict
     nn = NeuralNetwork()
-    nn.fit(featuresTrain, labelsTrain, learningRate=0.005, epoch=10000, batchSize=1, lam=0, hiddenLayerSize=2)
+    nn.fit(featuresTrain, labelsTrain, learningRate=0.1, epoch=50000, batchSize=1, lam=0, hiddenLayerSize=10)
     labelsPredictedTrain = nn.predict(featuresTrain)
     labelsPredictedValid = nn.predict(featuresValid)
 
@@ -184,32 +185,91 @@ def tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid):
     print("Macro-F1 Score for Neural Network on Training Set: %.2f / 100" % (macroF1Train * 100))
     print("Macro-F1 Score for Neural Network on Validation Set: %.2f / 100" % (macroF1Valid * 100))
 
-    print(labelsPredictedValid)
-    print(labelsValid)
+    # print(labelsPredictedValid)
+    # print(labelsValid)
+
+
+def plotLearningCurve(featuresTrain, featuresValid, labelsTrain, labelsValid):
+    epochs = [100, 500, 1000, 5000, 10000, 20000, 50000]
+    f1s = []
+
+    # Plot learning curve for logistic regression
+    for epoch in epochs:
+        lr = LogisticRegression()
+        lr.fit(featuresTrain, labelsTrain, learningRate=0.2, epoch=epoch, lam=0)
+        labelsPredictedTrain = lr.predict(featuresTrain)
+        labelsPredictedValid = lr.predict(featuresValid)
+
+        eval = Evaluation()
+        macroF1Valid = f1_score(labelsValid, labelsPredictedValid, average='macro')  # Check with sklearn
+        f1s.append(macroF1Valid)
+
+    fig, ax = plt.subplots()
+    ax.plot(epochs, f1s, label="Validation Macro F1", marker='o', markersize=2)
+    ax.set(xlabel='Epoch', ylabel='F1 Score',
+           title='LR F1 Score against Epoch')
+    ax.set_ylim(0, max(f1s)*1.1)
+    ax.set_xlim(0, max(epochs)*1.1)
+    ax.grid()
+    ax.legend()
+    fig.savefig("LR.png")
+
+    # Plot learning curve for neural network
+    f1s = []
+    for epoch in epochs:
+        nn = NeuralNetwork()
+        nn.fit(featuresTrain, labelsTrain, learningRate=0.1, epoch=epoch, batchSize=1, lam=0, hiddenLayerSize=10)
+        labelsPredictedTrain = nn.predict(featuresTrain)
+        labelsPredictedValid = nn.predict(featuresValid)
+
+        eval = Evaluation()
+        macroF1Valid = f1_score(labelsValid, labelsPredictedValid, average='macro')  # Check with sklearn
+        f1s.append(macroF1Valid)
+
+    # Plot learning curve for neural network
+    fig, ax = plt.subplots()
+    ax.plot(epochs, f1s, label="Validation Macro F1", marker='o', markersize=2)
+    ax.set(xlabel='Epoch', ylabel='F1 Score',
+           title='NN F1 Score against Epoch')
+    ax.set_ylim(0, max(f1s) * 1.1)
+    ax.set_xlim(0, max(epochs) * 1.1)
+    ax.grid()
+    ax.legend()
+    fig.savefig("NN.png")
+
 
 
 if __name__ == '__main__':
     start = time.time()
 
-    rawDf = readFile(sys.argv[1])
+    rawDf = readDataFrame(sys.argv[1])
+
+    # Get distribution of labels
+    computeDistribution(rawDf)
 
     # Split data
-    # trainSetDf, validSetDf = sample(rawDf, random_state=1)
+    trainSetDf, validSetDf = sample(rawDf, random_state=1)
 
     # Preprocess data
-    # idsTrain, featuresTrain, labelsTrain, idsValid, featuresValid, labelsValid = preprocess(trainSetDf, validSetDf)
+    idsTrain, featuresTrain, labelsTrain, idsValid, featuresValid, labelsValid = preprocess(trainSetDf, validSetDf)
 
     # Baseline
-    # runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid)
+    runBaseline(featuresTrain, featuresValid, labelsTrain, labelsValid)
 
     # Logistic regression
     # tuneLogisticRegression(featuresTrain, featuresValid, labelsTrain, labelsValid)
-    paramsDict = {'learningRate': 0.01, 'epoch': 23500, 'lambda': 0.01}
-    cv = CrossValidation(rawDf, foldsNum=10, modelType='lr', paramsDict=paramsDict)
-    cv.run()
+    # paramsDict = {'learningRate': 0.2, 'epoch': 50000, 'lambda': 0}
+    # cv = CrossValidation(rawDf, foldsNum=10, modelType='lr', paramsDict=paramsDict)
+    # cv.run()
 
     # Neural Network
     # tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid)
+    paramsDict = {'learningRate': 0.1, 'epoch': 50000, 'lambda': 0, 'hiddenLayerSize': 10, 'batchSize': 1}
+    cv = CrossValidation(rawDf, foldsNum=10, modelType='nn', paramsDict=paramsDict)
+    cv.run()
+
+    # Plot learning curve
+    # plotLearningCurve(featuresTrain, featuresValid, labelsTrain, labelsValid)
 
     end = time.time()
     computeTime(start, end)
