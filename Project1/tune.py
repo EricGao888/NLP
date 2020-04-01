@@ -258,15 +258,15 @@ if __name__ == '__main__':
 
     # Logistic regression
     # tuneLogisticRegression(featuresTrain, featuresValid, labelsTrain, labelsValid)
-    # paramsDict = {'learningRate': 0.2, 'epoch': 50000, 'lambda': 0}
-    # cv = CrossValidation(rawDf, foldsNum=10, modelType='lr', paramsDict=paramsDict)
-    # cv.run()
+    paramsDict = {'learningRate': 0.2, 'epoch': 50000, 'lambda': 0}
+    cv = CrossValidation(rawDf, foldsNum=10, modelType='lr', paramsDict=paramsDict)
+    cv.run()
 
     # Neural Network
     # tuneNeuralNetwork(featuresTrain, featuresValid, labelsTrain, labelsValid)
-    paramsDict = {'learningRate': 0.1, 'epoch': 50000, 'lambda': 0, 'hiddenLayerSize': 10, 'batchSize': 1}
-    cv = CrossValidation(rawDf, foldsNum=10, modelType='nn', paramsDict=paramsDict)
-    cv.run()
+    # paramsDict = {'learningRate': 0.1, 'epoch': 50000, 'lambda': 0, 'hiddenLayerSize': 10, 'batchSize': 1}
+    # cv = CrossValidation(rawDf, foldsNum=10, modelType='nn', paramsDict=paramsDict)
+    # cv.run()
 
     # Plot learning curve
     # plotLearningCurve(featuresTrain, featuresValid, labelsTrain, labelsValid)
