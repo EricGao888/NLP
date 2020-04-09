@@ -1,0 +1,1 @@
+conda create  --prefix deepmemm_env python=3.6 pip anaconda pytorch nltk torchvision gensim cudatoolkit=10.0 numpy=1.16.1 -c pytorch
